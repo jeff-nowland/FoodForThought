@@ -56,4 +56,4 @@ MESSAGE (STATUS "Current build type: " ${CMAKE_BUILD_TYPE})
 MESSAGE (STATUS "Install prefix: " ${CMAKE_INSTALL_PREFIX})
 
 ADD_SUBDIRECTORY (src)
-
+ADD_SUBDIRECTORY (test)
