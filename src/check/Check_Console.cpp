@@ -94,7 +94,7 @@ namespace f4t
 		void Console::enter(Test_Suite* suite)
 		{
 			if (suite != suite_) {
-				std::clog << "[SUITE ]" << suite->fully_qualified_name() << ' ' << suite->count() << " tests\n";
+				std::clog << "[SUITE ] " << suite->fully_qualified_name() << ' ' << suite->count() << " tests\n";
 			}
 			C->stat.push(Stat());
 		}
@@ -126,7 +126,7 @@ namespace f4t
 				std::clog << result.count << " tests, "
 					<< pass << " passed(" << p << "%), "
 					<< result.fail << " failed(" << f << "%), "
-					<< result.error << " tets errors(" << e << "%)";
+					<< result.error << " test errors(" << e << "%)";
 			}
 			std::clog << std::endl;
 		}

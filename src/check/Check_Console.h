@@ -46,7 +46,7 @@ namespace f4t
 
 
 #define F4T_CHECK_CONSOLE_SUBSUITE_(NAME, SUPER, ORDER)		\
-	class F4T_CHECK_TOK(NAME, _SubSuite)					\
+	class F4T_CHECK_TOK(NAME, _SubSuite) :					\
 		public f4t::check::Test_Suite						\
 	{														\
 		static F4T_CHECK_TOK(NAME, _SubSuite)	instance_;	\
@@ -68,7 +68,7 @@ namespace f4t
 	F4T_CHECK_CONSOLE_SUBSUITE_(NAME, f4t::check::Console::instance().suite(), ORDER)
 
 #define F4T_CHECK_CONSOLE_TEST(NAME, SUITE, ORDER)											\
-	class F4T_CHECK_TOK(NAME, _Test)														\
+	class F4T_CHECK_TOK(NAME, _Test) :														\
 		public f4t::check::Test_Case														\
 	{																						\
 		static F4T_CHECK_TOK(NAME, _Test) instance_;										\
@@ -79,13 +79,13 @@ namespace f4t
 		virtual std::string name() const override											\
 		{ return F4T_CHECK_STR(NAME); }														\
 	protected:																				\
-		virtual void execute(f4t::check::Test_Listener* listener);							\
+		virtual void execute(f4t::check::Test_Listener* listener) override;					\
 	};																						\
 	F4T_CHECK_TOK(NAME, _Test) F4T_CHECK_TOK(NAME, _Test)::instance_;						\
 	void F4T_CHECK_TOK(NAME, _Test)::execute(f4t::check::Test_Listener* listener)
 
 #define F4T_CHECK_CONSOLE_TEST_EXPECT_EXCEPTION(NAME, SUITE, ORDER, CATCH)					\
-	class F4T_CHECK_TOK(NAME, _Test)														\
+	class F4T_CHECK_TOK(NAME, _Test) :														\
 		public f4t::check::Test_Case														\
 	{																						\
 		static F4T_CHECK_TOK(NAME, _Test) instance_;										\
@@ -106,7 +106,7 @@ namespace f4t
 		try {																				\
 			execute_(listener);																\
 			throw f4t::check::Test_Fail(__FILE__, __LINE__,									\
-										"no exception of type " F4T_CHECK_STR(CATCH))		\
+										"no exception of type " F4T_CHECK_STR(CATCH));		\
 		}																					\
 		catch(CATCH&) {																		\
 		}																					\
