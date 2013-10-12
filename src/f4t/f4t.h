@@ -6,6 +6,9 @@
 
 namespace f4t
 {
+	template <typename T>
+	inline T clamp(T value, T lower, T upper)
+	{ return value < lower ? lower : upper < value ? upper : value; }
 }
 
 #endif

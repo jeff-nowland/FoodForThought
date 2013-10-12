@@ -18,5 +18,10 @@ namespace f4t
 			problem_->remove(this);
 		}
 	}
+
+	void Element::structure_finalized()
+	{
+	}
+
 }
 
