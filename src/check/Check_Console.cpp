@@ -84,10 +84,12 @@ namespace f4t
 		{
 			std::clog << "START " << suite_->count() << " tests\n";
 			C->clear();
+			Test_Listener::start();
 		}
 
 		void Console::stop()
 		{
+			Test_Listener::stop();
 			std::clog << "STOP\n";
 		}
 
@@ -97,10 +99,13 @@ namespace f4t
 				std::clog << "[SUITE ] " << suite->fully_qualified_name() << ' ' << suite->count() << " tests\n";
 			}
 			C->stat.push(Stat());
+			Test_Listener::enter(suite);
 		}
 
 		void Console::leave(Test_Suite* suite)
 		{
+			Test_Listener::leave(suite);
+
 			Stat result = C->stat.top();
 
 			C->stat.pop();
@@ -135,10 +140,12 @@ namespace f4t
 		{
 			std::clog << "[  TEST] " << test->fully_qualified_name();
 			C->stat.push(Stat(1));
+			Test_Listener::begin(test);
 		}
 
 		void Console::end(Test_Case* test)
 		{
+			Test_Listener::end(test);
 			Stat result = C->stat.top();
 
 			C->stat.pop();
@@ -161,6 +168,7 @@ namespace f4t
 			std::cerr << ", " << failure;
 			++C->stat.top().fail;
 			C->succeeded = false;
+			Test_Listener::notify(test, failure);
 		}
 
 		void Console::error(Test_Base* test, const std::string& best_guess)
@@ -168,6 +176,7 @@ namespace f4t
 			std::cerr << ", ERROR: " << best_guess;
 			++C->stat.top().error;
 			C->succeeded = false;
+			Test_Listener::error(test, best_guess);
 		}
 
 
