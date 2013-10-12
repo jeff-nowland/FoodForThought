@@ -111,6 +111,7 @@ namespace f4t
 			C->stat.pop();
 
 			if (suite != suite_) {
+				C->stat.top() += result;
 				std::clog << "[------] ";
 			}
 			else {
