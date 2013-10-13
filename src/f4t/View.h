@@ -97,7 +97,7 @@ namespace f4t
 		{ return first_ < last_ ? size_type(last_ - first_) : size_type(0); }
 
 		///	Get the maximum possible size of view.
-		static size_type max_size() const
+		static size_type max_size()
 		{ return std::numeric_limits<size_type>::max() / sizeof(T); }
 
 		///	Get pointer to data.
@@ -168,6 +168,32 @@ namespace f4t
 		const_reverse_iterator crend() const
 		{ return const_reverse_iterator(first_); }
 
+		///	Check same region.
+		///	@param	o	View to check.
+		///	@return		true if other view is same memory as this view.
+		bool operator ==(const View& o) const
+		{ return first_ == o.first_ && last_ == o.last_; }
+
+		///	Check lower region.
+		///	@param	o	View to check.
+		///	@return		true if this region lower in memory.
+		bool operator <(const View& o) const
+		{ return first_ < o.first_ || (first_ == o.first_ && last_ < o.last_); }
+
+		///	Get the overlap between this view and another view.
+		///	@param	o	The other view.
+		///	@return		The overlap between this memory and the other memory.
+		View overlap(const View& o) const
+		{
+			auto o_first = std::max(first_, o.first_),
+				 o_last	= std::min(last_, o.last_);
+
+			if (o_first > o_last) {
+				return View();
+			}
+			return View(o_first, o_last);
+		}
+
 		///	Create a new view.
 		///	@param	first	Offset into this view of the start of the new view to create.  If first < 0 then as if from end.
 		///	@param	last	Offset into this view of the end of the new view to create. If last < 0 then as if from end.
@@ -178,7 +204,7 @@ namespace f4t
 			if (first < 0) {
 				first += n;
 			}
-			first = clamp(first, 0, n);
+			first = clamp(first, difference_type(0), n);
 
 			if (last < 0) {
 				last += n;
@@ -187,40 +213,38 @@ namespace f4t
 			return View(first_ + first, first_ + last);
 		}
 
-		void copy_to(pointer p, difference_type offset = 0, difference_type n = std::numeric_limits<difference_type>::max()) const
+		///	Copy data to external memory.
+		///	@param	p	Destination pointer.
+		void copy_to(pointer p) const
+		{ std::copy(begin(), end(), p); }
+
+		///	Copy data from external memory.
+		///	@param	p	Source pointer.
+		void copy(const_pointer p)
+		{ std::copy(p, p + size(), begin()); }
+
+		///	Copy data to another view.
+		///	@param	o	The other view.
+		void copy_to(View& o) const
 		{
-			auto s = slice(offset, n);
-			std::copy(s.begin(), s.end(), p);
+			auto s = std::min(size(), o.size());
+			std::copy(begin(), begin() + s, o.begin());
 		}
 
-		void copy(const_pointer p, difference_type offset = 0, difference_type n = std::numeric_limits<difference_type>::max())
-		{
-			auto s = slice(offset, n);
-			std::copy(p, p + s.size(), s.begin());
-		}
+		///	Copy data from another view.
+		///	@param	o	The other view.
+		void copy(const View& o)
+		{ o.copy_to(*this); }
 
-		void copy_to(View& o, difference_type offset = 0, difference_type n = std::numeric_limits<difference_type>::max(),
-					 difference_type o_offset = 0, difference_type o_n = std::numeric_limits<difference_type>::max()) const
-		{
-			auto s = slice(offset, n),
-				d = o.slice(o_offset, o_n);
+		///	Fill the view memory with a value.
+		///	@param	value	The value.
+		void fill(const T& value)
+		{ std::fill(begin(), end(), value); }
 
-			auto nc = std::min(s.size(), d.size());
-			std::copy(s.begin(), s.begin() + nc, d.begin());
-		}
-
-		void copy(const View& o, difference_type offset = 0, difference_type n = std::numeric_limits<difference_type>::max(),
-				  difference_type o_offset = 0, difference_type o_n = std::numeric_limits<difference_type>::max())
-		{ o.copy_to(*this, o_offset, o_n, offset, n); }
-
-		void fill(const T& value, difference_type offset = 0, difference_type n = std::numeric_limits<difference_type>::max())
-		{
-			auto s = slice(offset, n);
-			std::fill(s.begin(), s.end(), value);
-		}
-
+		///	Apply a function to the data.
+		///	@param	fn	The function to apply.
 		template <typename FN>
-		void assign(const FN& fn)
+		void apply(const FN& fn)
 		{
 			auto first	= begin(), last	= end();
 			while (first != last) {
@@ -228,8 +252,11 @@ namespace f4t
 			}
 		}
 
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	fn	Function to apply.
 		template <typename U, typename FN>
-		void assign(const U& u, const FN& fn)
+		void apply(const U& u, const FN& fn)
 		{
 			auto first = begin(), last	= end();
 			auto u_pos = std::begin(u);
@@ -238,8 +265,12 @@ namespace f4t
 			}
 		}
 
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	fn	Function to apply.
 		template <typename U, typename V, typename FN>
-		void assign(const U& u, const V& v, const FN& fn)
+		void apply(const U& u, const V& v, const FN& fn)
 		{
 			auto first = begin(), last	= end();
 			auto u_pos = std::begin(u);
@@ -248,6 +279,206 @@ namespace f4t
 				*first++ = fn(*u_pos++, *v_pos++);
 			}
 		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	fn	Function to apply.
+		template <typename U, typename V, typename W, typename FN>
+		void apply(const U& u, const V& v, const W& w, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			while (first != last) {
+				*first++ = fn(*u_pos++, *v_pos++, *w_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	x	Fourth source data for function.
+		///	@param	fn	Function to apply.
+		template <typename U, typename V, typename W, typename X, typename FN>
+		void apply(const U& u, const V& v, const W& w, const X& x, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			auto x_pos = std::begin(x);
+			while (first != last) {
+				*first++ = fn(*u_pos++, *v_pos++, *w_pos++, *x_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	x	Fourth source data for function.
+		///	@param	y	Fifth source data for function.
+		///	@param	fn	Function to apply.
+		template <typename U, typename V, typename W, typename X, typename Y, typename FN>
+		void apply(const U& u, const V& v, const W& w, const X& x, const Y& y, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			auto x_pos = std::begin(x);
+			auto y_pos = std::begin(y);
+			while (first != last) {
+				*first++ = fn(*u_pos++, *v_pos++, *w_pos++, *x_pos++, *y_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	x	Fourth source data for function.
+		///	@param	y	Fifth source data for function.
+		///	@param	z	Sixth source data for function.
+		///	@param	fn	Function to apply.
+		template <typename U, typename V, typename W, typename X, typename Y, typename Z, typename FN>
+		void apply(const U& u, const V& v, const W& w, const X& x, const Y& y, const Z& z, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			auto x_pos = std::begin(x);
+			auto y_pos = std::begin(y);
+			auto z_pos = std::begin(z);
+			while (first != last) {
+				*first++ = fn(*u_pos++, *v_pos++, *w_pos++, *x_pos++, *y_pos++, *z_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	fn	The function to apply.
+		template <typename FN>
+		void mutate(const FN& fn)
+		{
+			auto first	= begin(), last	= end();
+			while (first != last) {
+				*first++ += fn();
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	fn	Function to mutate.
+		template <typename U, typename FN>
+		void mutate(const U& u, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			while (first != last) {
+				*first++ += fn(*u_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	fn	Function to mutate.
+		template <typename U, typename V, typename FN>
+		void mutate(const U& u, const V& v, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			while (first != last) {
+				*first++ += fn(*u_pos++, *v_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	fn	Function to mutate.
+		template <typename U, typename V, typename W, typename FN>
+		void mutate(const U& u, const V& v, const W& w, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			while (first != last) {
+				*first++ += fn(*u_pos++, *v_pos++, *w_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	x	Fourth source data for function.
+		///	@param	fn	Function to mutate.
+		template <typename U, typename V, typename W, typename X, typename FN>
+		void mutate(const U& u, const V& v, const W& w, const X& x, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			auto x_pos = std::begin(x);
+			while (first != last) {
+				*first++ += fn(*u_pos++, *v_pos++, *w_pos++, *x_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	x	Fourth source data for function.
+		///	@param	y	Fifth source data for function.
+		///	@param	fn	Function to mutate.
+		template <typename U, typename V, typename W, typename X, typename Y, typename FN>
+		void mutate(const U& u, const V& v, const W& w, const X& x, const Y& y, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			auto x_pos = std::begin(x);
+			auto y_pos = std::begin(y);
+			while (first != last) {
+				*first++ += fn(*u_pos++, *v_pos++, *w_pos++, *x_pos++, *y_pos++);
+			}
+		}
+
+		///	Apply a function to the data.
+		///	@param	u	Source data for function.
+		///	@param	v	Second source data for function.
+		///	@param	w	Third source data for function.
+		///	@param	x	Fourth source data for function.
+		///	@param	y	Fifth source data for function.
+		///	@param	z	Sixth source data for function.
+		///	@param	fn	Function to mutate.
+		template <typename U, typename V, typename W, typename X, typename Y, typename Z, typename FN>
+		void mutate(const U& u, const V& v, const W& w, const X& x, const Y& y, const Z& z, const FN& fn)
+		{
+			auto first = begin(), last	= end();
+			auto u_pos = std::begin(u);
+			auto v_pos = std::begin(v);
+			auto w_pos = std::begin(w);
+			auto x_pos = std::begin(x);
+			auto y_pos = std::begin(y);
+			auto z_pos = std::begin(z);
+			while (first != last) {
+				*first++ += fn(*u_pos++, *v_pos++, *w_pos++, *x_pos++, *y_pos++, *z_pos++);
+			}
+		}
+
 	};
 }
 

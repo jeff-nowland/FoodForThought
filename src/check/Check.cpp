@@ -159,15 +159,23 @@ namespace f4t
 			auto& params	= fail.params();
 
 			ss << fail.file() << '@' << fail.line();
+
+			bool delimited = false;
 			if (!mesg.empty()) {
 				ss << ": " << fail.mesg();
+				delimited = true;
 			}
 
 			if (!params.empty()) {
 				auto pos = params.begin(),
 					 end = params.end();
 
-				ss << "['"<<pos->name() << "'='" << pos->value() << '\'';
+				if (!delimited) {
+					ss << ':';
+					delimited = true;
+				}
+
+				ss << " ['"<<pos->name() << "'='" << pos->value() << '\'';
 				while (++pos != end) {
 					ss << ",'" << pos->name() << "'='" << pos->value() << '\'';
 				}
