@@ -360,7 +360,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	fn	The function to apply.
 		template <typename FN>
 		void mutate(const FN& fn)
@@ -371,7 +371,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	u	Source data for function.
 		///	@param	fn	Function to mutate.
 		template <typename U, typename FN>
@@ -384,7 +384,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	u	Source data for function.
 		///	@param	v	Second source data for function.
 		///	@param	fn	Function to mutate.
@@ -399,7 +399,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	u	Source data for function.
 		///	@param	v	Second source data for function.
 		///	@param	w	Third source data for function.
@@ -416,7 +416,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	u	Source data for function.
 		///	@param	v	Second source data for function.
 		///	@param	w	Third source data for function.
@@ -435,7 +435,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	u	Source data for function.
 		///	@param	v	Second source data for function.
 		///	@param	w	Third source data for function.
@@ -456,7 +456,7 @@ namespace f4t
 			}
 		}
 
-		///	Apply a function to the data.
+		///	Add a function to the data.
 		///	@param	u	Source data for function.
 		///	@param	v	Second source data for function.
 		///	@param	w	Third source data for function.
