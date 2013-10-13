@@ -9,6 +9,8 @@ namespace f4t
 {
 	Problem::Problem()
 		:	elements_(),
+			buffers_(),
+			total_dim_(0),
 			structure_finalized_(false)
 	{}
 
@@ -41,12 +43,17 @@ namespace f4t
 			return;
 		}
 
+		auto& name = element->name();
+		if (name.empty()) {
+			throw invalid_name_error("element(empty name)");
+		}
+
 		if (structure_finalized_) {
 			throw structure_finalized_error("problem(structure-finalized)");
 		}
 
-		if (!elements_.insert(std::make_pair(element->name(), element)).second) {
-			throw duplicate_argument_error("element(duplicate name)");
+		if (!elements_.insert(std::make_pair(name, element)).second) {
+			throw invalid_name_error("element(duplicate name)");
 		}
 
 		element->problem_ = this;
@@ -64,6 +71,24 @@ namespace f4t
 
 		elements_.erase(element->name());
 		element->problem_ = nullptr;
+	}
+
+	Virtual_Buffer* Problem::make_buffer(const std::string& name, std::size_t count, std::size_t dim)
+	{
+		if (name.empty()) {
+			throw invalid_name_error("name(empty)");
+		}
+
+		if (structure_finalized_) {
+			throw structure_finalized_error("problem(structure-finalized)");
+		}
+
+		auto r = buffers_.insert(std::make_pair(name, Virtual_Buffer(count, dim)));
+		if (!r.second) {
+			throw invalid_name_error("buffer(duplicate name)");
+		}
+		total_dim_ += (count * dim);
+		return &r.first->second;
 	}
 }
 

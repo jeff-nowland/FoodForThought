@@ -1,7 +1,7 @@
 #ifndef f4t_View_h
 #define f4t_View_h	1
 
-#include "f4t.h"
+#include "Util.h"
 
 #include <iterator>
 #include <limits>
@@ -480,6 +480,12 @@ namespace f4t
 		}
 
 	};
+
+	template <typename T>
+	inline std::ostream& operator << (std::ostream& strm, const View<T>& view)
+	{
+		return print_container (strm, view);
+	}
 }
 
 

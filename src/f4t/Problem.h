@@ -3,6 +3,7 @@
 
 #include "f4t.h"
 #include "Exception.h"
+#include "Virtual_Buffer.h"
 
 #include <string>
 #include <unordered_map>
@@ -10,20 +11,25 @@
 namespace f4t
 {
 	class Element;
+	class Virtual_Buffer;
 
-	F4T_DECLARE_SIMPLE_EXCEPTION(problem_error, std::runtime_error);
-	F4T_DECLARE_SIMPLE_EXCEPTION(element_owned_error, problem_error);
-	F4T_DECLARE_SIMPLE_EXCEPTION(structure_finalized_error, problem_error);
 
 	///	@class Problem.	Base implementation of a problem to be solved.
 	class Problem
 	{
-		std::unordered_map<std::string, Element*>	elements_;
-		bool										structure_finalized_;
+		std::unordered_map<std::string, Element*>		elements_;
+		std::unordered_map<std::string, Virtual_Buffer>	buffers_;
+		std::size_t										total_dim_;
+		bool											structure_finalized_;
 
 		Problem(const Problem&)	= delete;
 		Problem& operator =(const Problem&) = delete;
 	public:
+		F4T_DECLARE_SIMPLE_EXCEPTION(problem_error, std::runtime_error);
+		F4T_DECLARE_SIMPLE_EXCEPTION(element_owned_error, problem_error);
+		F4T_DECLARE_SIMPLE_EXCEPTION(structure_finalized_error, problem_error);
+		F4T_DECLARE_SIMPLE_EXCEPTION(invalid_name_error, problem_error);
+
 		///	Initialize.
 		Problem();
 
@@ -55,6 +61,19 @@ namespace f4t
 		{
 			auto pos = elements_.find(name);
 			return pos != elements_.end() ? const_cast<Element*>(pos->second) : nullptr;
+		}
+
+		Virtual_Buffer* make_buffer(const std::string& name, std::size_t count, std::size_t dim);
+
+		Virtual_Buffer* get_buffer(const std::string& name) const
+		{
+			auto pos = buffers_.find(name);
+			return pos != buffers_.end() ? const_cast<Virtual_Buffer*>(&pos->second) : nullptr;
+		}
+
+		bool has_buffer(const std::string& name) const
+		{
+			return buffers_.find(name) != buffers_.end();
 		}
 
 		///	Get structure finalized flag.
