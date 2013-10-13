@@ -582,3 +582,48 @@ F4T_CHECK_CONSOLE_TEST(Mutate_6, View, 5)
 	F4T_CHECK(arr[2] == 3)(arr[2]);
 }
 
+F4T_CHECK_CONSOLE_TEST(Slice_1, View, 3)
+{
+	int arr[] = { 1, 2, 3, 4, 5, 6 };
+	f4t::View<int>	view(&arr[0], 6),
+					u = view.slice();
+	F4T_CHECK(u.begin() == &arr[0]);
+	F4T_CHECK(u.end() == &arr[6]);
+}
+
+F4T_CHECK_CONSOLE_TEST(Slice_2, View, 3)
+{
+	int arr[] = { 1, 2, 3, 4, 5, 6 };
+	f4t::View<int>	view(&arr[0], 6),
+					u = view.slice(2);
+	F4T_CHECK(u.begin() == &arr[2]);
+	F4T_CHECK(u.end() == &arr[6]);
+}
+
+F4T_CHECK_CONSOLE_TEST(Slice_3, View, 3)
+{
+	int arr[] = { 1, 2, 3, 4, 5, 6 };
+	f4t::View<int>	view(&arr[0], 6),
+					u = view.slice(2, 4);
+	F4T_CHECK(u.begin() == &arr[2]);
+	F4T_CHECK(u.end() == &arr[4]);
+}
+
+F4T_CHECK_CONSOLE_TEST(Slice_4, View, 3)
+{
+	int arr[] = { 1, 2, 3, 4, 5, 6 };
+	f4t::View<int>	view(&arr[0], 6),
+					u = view.slice(2, -2);
+	F4T_CHECK(u.begin() == &arr[2]);
+	F4T_CHECK(u.end() == &arr[4]);
+}
+
+F4T_CHECK_CONSOLE_TEST(Slice_5, View, 3)
+{
+	int arr[] = { 1, 2, 3, 4, 5, 6 };
+	f4t::View<int>	view(&arr[0], 6),
+					u = view.slice(-4);
+	F4T_CHECK(u.begin() == &arr[2]);
+	F4T_CHECK(u.end() == &arr[6]);
+}
+
